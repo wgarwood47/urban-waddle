@@ -1,0 +1,385 @@
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <title>Habit Tracker</title> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="description" content="A simple monthly habit tracker">
+<link rel="icon" href="favicon.png">
+<link href="https://fonts.cdnfonts.com/css/lt-bump-smrd" rel="stylesheet">
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        min-height: 100vh;
+        margin: 0;
+        padding: 40px 20px;
+
+        background:
+            radial-gradient(
+                circle at 20% 20%,
+                rgba(120, 60, 255, 0.35),
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 80% 30%,
+                rgba(0, 200, 255, 0.25),
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 50% 90%,
+                rgba(255, 0, 150, 0.2),
+                transparent 40%
+            ),
+            linear-gradient(
+                135deg,
+                #080b1a 0%,
+                #111936 50%,
+                #090d1f 100%
+            );
+
+        color: white;
+        text-align: center;
+        font-family: 'LT Bump SmRd', sans-serif;
+    }
+
+    #title {
+        margin: 50px 0 5px;
+        line-height: 1.2;
+    }
+
+    #subtitle {
+        opacity: 0.7;
+        font-size: 18px;
+        margin: 0 0 30px;
+    }
+
+    #calendarContainer {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    #calendarDiv {
+        width: min(500px, 100%);
+        overflow: hidden;
+
+        background-color: white;
+        color: black;
+
+        border-radius: 10px 10px 20px 20px;
+
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    #calendarHeading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        min-height: 60px;
+        padding: 0 20px;
+
+        border: 2px solid black;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+
+        font-size: 20px;
+
+        background-color: rebeccapurple;
+        color: white;
+    }
+
+    #habitTitle,
+    #totalDays {
+        margin: 0;
+    }
+
+    #habitTitle {
+        cursor: pointer;
+        max-width: 70%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #habitTitle:hover {
+        text-decoration: underline;
+    }
+
+    #calendarContent {
+        display: flex;
+        justify-content: center;
+
+        padding: 20px;
+
+        border: 2px solid black;
+        border-top: none;
+    }
+
+    #tracker {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .day {
+        aspect-ratio: 1;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        background-color: rebeccapurple;
+        color: white;
+
+        font-size: 15px;
+
+        cursor: pointer;
+
+        transition:
+            transform 0.15s ease,
+            background-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .day:hover {
+        transform: scale(1.08);
+    }
+
+    .day.completed {
+        background-color: #18b96f;
+        box-shadow: 0 0 10px rgba(24, 185, 111, 0.4);
+    }
+
+    .day.today {
+        border: 3px solid #111;
+    }
+
+    .day.empty {
+        background-color: transparent;
+        cursor: default;
+    }
+
+    .day.empty:hover {
+        transform: none;
+    }
+
+    #resetButton {
+        margin-top: 25px;
+
+        padding: 10px 25px;
+
+        border: none;
+        border-radius: 8px;
+
+        background-color: rebeccapurple;
+        color: white;
+
+        font-family: inherit;
+        font-size: 16px;
+
+        cursor: pointer;
+
+        transition:
+            background-color 0.15s ease,
+            transform 0.15s ease;
+    }
+
+    #resetButton:hover {
+        background-color: #6e28a8;
+        transform: translateY(-2px);
+    }
+
+    #resetButton:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 500px) {
+        body {
+            padding: 20px 10px;
+        }
+
+        #title {
+            margin-top: 20px;
+        }
+
+        #calendarContent {
+            padding: 15px;
+        }
+
+        #tracker {
+            gap: 5px;
+        }
+
+        #calendarHeading {
+            padding: 0 15px;
+            font-size: 17px;
+        }
+    }
+</style>
+
+</head> <body>
+<h1 id="title">Month</h1>
+<h2 id="subtitle">Monthly Habit Tracker</h2>
+
+<div id="calendarContainer">
+    <div id="calendarDiv">
+
+        <div id="calendarHeading">
+            <p id="habitTitle">My New Habit</p>
+            <p id="totalDays">0/31</p>
+        </div>
+
+        <div id="calendarContent">
+            <div id="tracker"></div>
+        </div>
+
+    </div>
+</div>
+
+<button id="resetButton">Reset</button>
+
+
+<script>
+    const date = new Date();
+
+    const currentMonth = date.getMonth();
+    const currentDate = date.getDate();
+    const currentYear = date.getFullYear();
+
+    const months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ];
+
+    const title = document.getElementById("title");
+    const habitTitle = document.getElementById("habitTitle");
+    const totalDays = document.getElementById("totalDays");
+    const tracker = document.getElementById("tracker");
+    const resetButton = document.getElementById("resetButton");
+
+    // Display current month and year
+    title.textContent = `${months[currentMonth]} ${currentYear}`;
+
+
+    // Get the number of days in the current month.
+    // Using day 0 of the next month gives the last day
+    // of the current month.
+    const daysInThisMonth = new Date(
+        currentYear,
+        currentMonth + 1,
+        0
+    ).getDate();
+
+
+    // Store completed days.
+    const completedDays = new Set();
+
+
+    // Allow the user to edit the habit name.
+    habitTitle.addEventListener("click", function () {
+        const habit = prompt(
+            "What's your habit?",
+            habitTitle.textContent
+        );
+
+        if (habit === null) {
+            return;
+        }
+
+        const trimmedHabit = habit.trim();
+
+        if (trimmedHabit.length === 0) {
+            habitTitle.textContent = "Click to set your habit";
+        } else {
+            habitTitle.textContent = trimmedHabit;
+        }
+    });
+
+
+    // Update the completion counter.
+    function updateCounter() {
+        totalDays.textContent =
+            `${completedDays.size}/${daysInThisMonth}`;
+    }
+
+
+    // Create the calendar.
+    function createCalendar() {
+        tracker.innerHTML = "";
+
+        for (let dayNumber = 1; dayNumber <= daysInThisMonth; dayNumber++) {
+
+            const day = document.createElement("div");
+
+            day.classList.add("day");
+            day.textContent = dayNumber;
+            day.id = `day-${dayNumber}`;
+
+            // Highlight today's date.
+            if (dayNumber === currentDate) {
+                day.classList.add("today");
+            }
+
+            // Restore completed state.
+            if (completedDays.has(dayNumber)) {
+                day.classList.add("completed");
+            }
+
+            // Toggle completed state.
+            day.addEventListener("click", function () {
+
+                if (completedDays.has(dayNumber)) {
+                    completedDays.delete(dayNumber);
+                    day.classList.remove("completed");
+                } else {
+                    completedDays.add(dayNumber);
+                    day.classList.add("completed");
+                }
+
+                updateCounter();
+            });
+
+            tracker.appendChild(day);
+        }
+
+        updateCounter();
+    }
+
+
+    // Reset all completed days.
+    resetButton.addEventListener("click", function () {
+
+        const shouldReset = confirm(
+            "Are you sure you want to reset this month's progress?"
+        );
+
+        if (!shouldReset) {
+            return;
+        }
+
+        completedDays.clear();
+
+        createCalendar();
+    });
+
+
+    // Start the tracker.
+    createCalendar();
+</script>
+
+</body> </html>
